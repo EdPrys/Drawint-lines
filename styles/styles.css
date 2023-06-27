@@ -1,0 +1,37 @@
+body {
+  background-color: #2e9c49;
+}
+
+#drop-zone {
+  width: 150px;
+  margin: 0 auto;
+  border: 2px dashed #ccc;
+  padding: 20px;
+  text-align: center;
+}
+
+#image-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+#image-wrapper {
+  position: relative;
+  max-width: 800px;
+}
+
+#image-preview {
+  max-width: 100%;
+  height: auto;
+}
+
+p {
+  cursor: pointer;
+}
+
+canvas {
+  position: absolute;
+  z-index: 100;
+}
