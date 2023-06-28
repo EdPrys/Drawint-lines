@@ -42,13 +42,12 @@ dropZone.addEventListener("drop", (e) => {
 const canvasEle = document.getElementById("drawContainer");
 const context = canvasEle.getContext("2d");
 
-let startPosition = { x: 0, y: 0 };
-let lineCoordinates = { x: 0, y: 0 };
 let isDrawStart = false;
+let lines = [];
 
 const getClientOffset = (event) => {
   const { pageX, pageY } = event.touches ? event.touches[0] : event;
-  const rect = canvasEle.getBoundingClientRect(); // Отримуємо розміри та положення полотна
+  const rect = canvasEle.getBoundingClientRect();
   const x = pageX - rect.left;
   const y = pageY - rect.top;
 
@@ -58,11 +57,11 @@ const getClientOffset = (event) => {
   };
 };
 
-const drawLine = () => {
+const drawLine = (start, end) => {
   context.strokeStyle = "#ffffff";
   context.beginPath();
-  context.moveTo(startPosition.x, startPosition.y);
-  context.lineTo(lineCoordinates.x, lineCoordinates.y);
+  context.moveTo(start.x, start.y);
+  context.lineTo(end.x, end.y);
   context.stroke();
 };
 
@@ -72,22 +71,35 @@ const drawSquare = (position) => {
 };
 
 const mouseDownListener = (event) => {
-  startPosition = getClientOffset(event);
+  const startPosition = getClientOffset(event);
   isDrawStart = true;
+  lines.push({ start: startPosition, end: startPosition });
   drawSquare(startPosition);
 };
 
 const mouseMoveListener = (event) => {
   if (!isDrawStart) return;
 
-  lineCoordinates = getClientOffset(event);
+  const lineCoordinates = getClientOffset(event);
+  const lastLine = lines[lines.length - 1];
+  lastLine.end = lineCoordinates;
+
   clearCanvas();
-  drawLine();
+  for (const line of lines) {
+    drawLine(line.start, line.end);
+    drawSquare(line.start);
+    drawSquare(line.end);
+
+    const midPoint = {
+      x: (line.start.x + line.end.x) / 2,
+      y: (line.start.y + line.end.y) / 2,
+    };
+    drawSquare(midPoint);
+  }
 };
 
 const mouseupListener = (event) => {
   isDrawStart = false;
-  drawSquare(lineCoordinates);
 };
 
 const clearCanvas = () => {
