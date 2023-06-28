@@ -1,5 +1,6 @@
 body {
   background-color: #2e9c49;
+  overflow: hidden;
 }
 
 #drop-zone {
@@ -31,7 +32,9 @@ p {
   cursor: pointer;
 }
 
-canvas {
+#drawContainer {
   position: absolute;
+  top: 0;
+  left: 0;
   z-index: 100;
 }

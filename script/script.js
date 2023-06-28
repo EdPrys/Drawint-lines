@@ -23,6 +23,15 @@ dropZone.addEventListener("drop", (e) => {
     reader.onload = (e) => {
       imageContainer.style.display = "flex";
       imagePreview.src = e.target.result;
+
+      // Отримуємо розміри картинки і змінюємо розміри полотна
+      const img = new Image();
+      img.onload = () => {
+        canvasEle.width = img.width;
+        canvasEle.height = img.height;
+        context.clearRect(0, 0, canvasEle.width, canvasEle.height);
+      };
+      img.src = e.target.result;
     };
 
     reader.readAsDataURL(file);
@@ -30,43 +39,65 @@ dropZone.addEventListener("drop", (e) => {
 });
 
 ////////////////////////////
-var canv = document.getElementById("canvas");
-var ctx = canv.getContext("2d");
+const canvasEle = document.getElementById("drawContainer");
+const context = canvasEle.getContext("2d");
 
-canv.width = window.innerWidth;
-canv.height = window.innerHeight;
+let startPosition = { x: 0, y: 0 };
+let lineCoordinates = { x: 0, y: 0 };
+let isDrawStart = false;
 
-var rectSize = 5; // Розмір квадрата
-var isDrawing = false; // Оголошення змінної isDrawing
-var startX, startY; // Зберігання координат квадрата
+const getClientOffset = (event) => {
+  const { pageX, pageY } = event.touches ? event.touches[0] : event;
+  const rect = canvasEle.getBoundingClientRect(); // Отримуємо розміри та положення полотна
+  const x = pageX - rect.left;
+  const y = pageY - rect.top;
 
-canv.addEventListener("click", function (event) {
-  var x = event.clientX - canv.offsetLeft;
-  var y = event.clientY - canv.offsetTop;
+  return {
+    x,
+    y,
+  };
+};
 
-  if (!isDrawing) {
-    // Перший клік - створення квадрата
-    startX = x;
-    startY = y;
-    isDrawing = true;
-  } else {
-    // Другий клік - малювання лінії
-    ctx.strokeStyle = "white";
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(x, y);
-    ctx.stroke();
+const drawLine = () => {
+  context.strokeStyle = "#ffffff";
+  context.beginPath();
+  context.moveTo(startPosition.x, startPosition.y);
+  context.lineTo(lineCoordinates.x, lineCoordinates.y);
+  context.stroke();
+};
 
-    // Малюємо квадрати
-    ctx.fillStyle = "white"; // Колір квадратів
-    ctx.fillRect(
-      startX - rectSize / 2,
-      startY - rectSize / 2,
-      rectSize,
-      rectSize
-    );
-    ctx.fillRect(x - rectSize / 2, y - rectSize / 2, rectSize, rectSize);
+const drawSquare = (position) => {
+  context.fillStyle = "#ffffff";
+  context.fillRect(position.x - 2.5, position.y - 2.5, 5, 5);
+};
 
-    isDrawing = false;
-  }
-});
+const mouseDownListener = (event) => {
+  startPosition = getClientOffset(event);
+  isDrawStart = true;
+  drawSquare(startPosition);
+};
+
+const mouseMoveListener = (event) => {
+  if (!isDrawStart) return;
+
+  lineCoordinates = getClientOffset(event);
+  clearCanvas();
+  drawLine();
+};
+
+const mouseupListener = (event) => {
+  isDrawStart = false;
+  drawSquare(lineCoordinates);
+};
+
+const clearCanvas = () => {
+  context.clearRect(0, 0, canvasEle.width, canvasEle.height);
+};
+
+canvasEle.addEventListener("mousedown", mouseDownListener);
+canvasEle.addEventListener("mousemove", mouseMoveListener);
+canvasEle.addEventListener("mouseup", mouseupListener);
+
+canvasEle.addEventListener("touchstart", mouseDownListener);
+canvasEle.addEventListener("touchmove", mouseMoveListener);
+canvasEle.addEventListener("touchend", mouseupListener);
