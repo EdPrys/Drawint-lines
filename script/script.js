@@ -82,6 +82,7 @@ const calculateMidPoint = (start, end) => {
 const mouseDownListener = (event) => {
   const position = getClientOffset(event);
 
+  // Перевіряємо, чи клацнули на квадратик
   for (const line of lines) {
     const { start, mid, end } = line;
     const squares = [start, mid, end];
@@ -97,6 +98,7 @@ const mouseDownListener = (event) => {
     }
   }
 
+  // Якщо не клацнули на квадратик, створюємо нову лінію
   isDrawStart = true;
   const newLine = { start: position, mid: position, end: position };
   lines.push(newLine);
@@ -108,17 +110,7 @@ const mouseMoveListener = (event) => {
   if (isDrawStart && selectedLine) {
     const position = getClientOffset(event);
     selectedLine.end = position;
-    const midPoint = calculateMidPoint(selectedLine.start, selectedLine.end);
-    const dx = Math.abs(selectedLine.start.x - selectedLine.end.x);
-    const dy = Math.abs(selectedLine.start.y - selectedLine.end.y);
-
-    if (dx > dy) {
-      midPoint.y = selectedLine.start.y;
-    } else {
-      midPoint.x = selectedLine.start.x;
-    }
-
-    selectedLine.mid = midPoint;
+    selectedLine.mid = calculateMidPoint(selectedLine.start, position);
   } else if (selectedSquare) {
     const position = getClientOffset(event);
     selectedSquare.x = position.x;
