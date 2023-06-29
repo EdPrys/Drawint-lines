@@ -64,8 +64,7 @@ const drawLine = (start, mid, end) => {
   context.strokeStyle = "#ffffff";
   context.beginPath();
   context.moveTo(start.x, start.y);
-  context.lineTo(mid.x, mid.y);
-  context.lineTo(end.x, end.y);
+  context.quadraticCurveTo(mid.x, mid.y, end.x, end.y);
   context.stroke();
 };
 
