@@ -45,6 +45,9 @@ const context = canvasEle.getContext("2d");
 let isDrawStart = false;
 let lines = [];
 
+let selectedSquare = null;
+let selectedLine = null;
+
 const getClientOffset = (event) => {
   const { pageX, pageY } = event.touches ? event.touches[0] : event;
   const rect = canvasEle.getBoundingClientRect();
@@ -71,18 +74,38 @@ const drawSquare = (position) => {
 };
 
 const mouseDownListener = (event) => {
-  const startPosition = getClientOffset(event);
+  const position = getClientOffset(event);
+
+  // Перевіряємо, чи клацнули на квадратик
+  for (const line of lines) {
+    for (const square of [line.start, line.end]) {
+      const dx = square.x - position.x;
+      const dy = square.y - position.y;
+      if (Math.sqrt(dx * dx + dy * dy) < 2.5) {
+        selectedSquare = square;
+        selectedLine = line;
+        return;
+      }
+    }
+  }
+
+  // Якщо не клацнули на квадратик, створюємо нову лінію
   isDrawStart = true;
-  lines.push({ start: startPosition, end: startPosition });
-  drawSquare(startPosition);
+  const newLine = { start: position, end: position };
+  lines.push(newLine);
+  selectedLine = newLine;
+  drawSquare(position);
 };
 
 const mouseMoveListener = (event) => {
-  if (!isDrawStart) return;
-
-  const lineCoordinates = getClientOffset(event);
-  const lastLine = lines[lines.length - 1];
-  lastLine.end = lineCoordinates;
+  if (isDrawStart && selectedLine) {
+    const position = getClientOffset(event);
+    selectedLine.end = position;
+  } else if (selectedSquare) {
+    const position = getClientOffset(event);
+    selectedSquare.x = position.x;
+    selectedSquare.y = position.y;
+  }
 
   clearCanvas();
   for (const line of lines) {
@@ -98,8 +121,10 @@ const mouseMoveListener = (event) => {
   }
 };
 
-const mouseupListener = (event) => {
+const mouseupListener = () => {
   isDrawStart = false;
+  selectedSquare = null;
+  selectedLine = null;
 };
 
 const clearCanvas = () => {
