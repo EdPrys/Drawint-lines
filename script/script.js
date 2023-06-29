@@ -24,7 +24,6 @@ dropZone.addEventListener("drop", (e) => {
       imageContainer.style.display = "flex";
       imagePreview.src = e.target.result;
 
-      // Отримуємо розміри картинки і змінюємо розміри полотна
       const img = new Image();
       img.onload = () => {
         canvasEle.width = img.width;
@@ -45,6 +44,9 @@ const context = canvasEle.getContext("2d");
 let isDrawStart = false;
 let lines = [];
 
+let selectedSquare = null;
+let selectedLine = null;
+
 const getClientOffset = (event) => {
   const { pageX, pageY } = event.touches ? event.touches[0] : event;
   const rect = canvasEle.getBoundingClientRect();
@@ -57,11 +59,11 @@ const getClientOffset = (event) => {
   };
 };
 
-const drawLine = (start, end) => {
+const drawLine = (start, mid, end) => {
   context.strokeStyle = "#ffffff";
   context.beginPath();
   context.moveTo(start.x, start.y);
-  context.lineTo(end.x, end.y);
+  context.quadraticCurveTo(mid.x, mid.y, end.x, end.y);
   context.stroke();
 };
 
@@ -70,36 +72,73 @@ const drawSquare = (position) => {
   context.fillRect(position.x - 2.5, position.y - 2.5, 5, 5);
 };
 
+const calculateMidPoint = (start, end) => {
+  return {
+    x: (start.x + end.x) / 2,
+    y: (start.y + end.y) / 2,
+  };
+};
+
 const mouseDownListener = (event) => {
-  const startPosition = getClientOffset(event);
+  const position = getClientOffset(event);
+
+  for (const line of lines) {
+    const { start, mid, end } = line;
+    const squares = [start, mid, end];
+
+    for (const square of squares) {
+      const dx = square.x - position.x;
+      const dy = square.y - position.y;
+      if (Math.sqrt(dx * dx + dy * dy) < 2.5) {
+        selectedSquare = square;
+        selectedLine = line;
+        return;
+      }
+    }
+  }
+
   isDrawStart = true;
-  lines.push({ start: startPosition, end: startPosition });
-  drawSquare(startPosition);
+  const newLine = { start: position, mid: position, end: position };
+  lines.push(newLine);
+  selectedLine = newLine;
+  drawSquare(position);
 };
 
 const mouseMoveListener = (event) => {
-  if (!isDrawStart) return;
+  if (isDrawStart && selectedLine) {
+    const position = getClientOffset(event);
+    selectedLine.end = position;
+    selectedLine.mid = calculateMidPoint(selectedLine.start, position);
+  } else if (selectedSquare) {
+    const position = getClientOffset(event);
+    selectedSquare.x = position.x;
+    selectedSquare.y = position.y;
 
-  const lineCoordinates = getClientOffset(event);
-  const lastLine = lines[lines.length - 1];
-  lastLine.end = lineCoordinates;
+    if (selectedLine.mid === selectedSquare) {
+      const dx = position.x - selectedSquare.x;
+      const dy = position.y - selectedSquare.y;
+      selectedLine.start.x += dx;
+      selectedLine.start.y += dy;
+      selectedLine.mid.x += dx;
+      selectedLine.mid.y += dy;
+      selectedLine.end.x += dx;
+      selectedLine.end.y += dy;
+    }
+  }
 
   clearCanvas();
   for (const line of lines) {
-    drawLine(line.start, line.end);
+    drawLine(line.start, line.mid, line.end);
     drawSquare(line.start);
+    drawSquare(line.mid);
     drawSquare(line.end);
-
-    const midPoint = {
-      x: (line.start.x + line.end.x) / 2,
-      y: (line.start.y + line.end.y) / 2,
-    };
-    drawSquare(midPoint);
   }
 };
 
-const mouseupListener = (event) => {
+const mouseupListener = () => {
   isDrawStart = false;
+  selectedSquare = null;
+  selectedLine = null;
 };
 
 const clearCanvas = () => {
